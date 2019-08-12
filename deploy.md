@@ -115,7 +115,7 @@ service apache2 restart
 
 建立虚拟主机配置文件 `vim /etc/apache2/sites-available/matsuri.conf`
 
-```
+```apacheconf
 <VirtualHost *:80>
     ServerName example.com
     DocumentRoot /var/www/frontend
