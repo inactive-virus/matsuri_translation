@@ -1,5 +1,6 @@
 twemoji.base = "https://raw.githubusercontent.com/twitter/twemoji/master/assets/";
 var url;
+var saveUrlUser = false;
 function submit_task(isFast) {
     performanceData.beforeSubmitTask = new Date().getTime();
     url = $('#url').val();
@@ -64,6 +65,8 @@ function fetch_img(task_id) {
                     };
 
                     xhr.onload = function (e) {
+                        if (saveUrlUser) if ($("#url").val().split("/")[3] != null) localStorage.setItem("lastUser", $("#url").val().split("/")[3]);
+                        saveUrlUser = false;
                         performanceData.imageLoaded = new Date().getTime();
                         $("#screenshots").html("            <div id=\"screenshotclip0\" class=\"screenshotclip\"\n" +
                             "             style=\"height: 800px;background-image: url('img/twittersample.jpg')\"></div>");
@@ -160,6 +163,18 @@ function show_translate(data) {
     })
 }
 
+function toggleLikes(obj) {
+    if ($(obj).hasClass("nolikes")) {
+        $(obj).css("height", $(obj).height() + 109);
+        $(obj).removeClass("nolikes");
+        return true;
+    } else {
+        $(obj).css("height", $(obj).height() - 109);
+        $(obj).addClass("nolikes");
+        return false;
+    }
+}
+
 function clip_screenshot() {
     $("#screenshotclip" + 0).click(function () {
         goto($(this)[0].id);
@@ -183,19 +198,16 @@ function clip_screenshot() {
             goto($(this)[0].id);
         });
 
-        if (("https://twitter.com" + tweetpos[i].path) == $('#url').val())
-        //$("#screenshotclip" + (i + 1000)).css("height", tweetpos[i].blockbottom - tweetpos[i].bottom-109);
-        //$("#screenshotclip" + (i + 1000)).addClass("nolikes");
+        if (("https://twitter.com" + tweetpos[i].path) == $('#url').val()) {
+            //$("#screenshotclip" + (i + 1000)).css("height", tweetpos[i].blockbottom - tweetpos[i].bottom-109);
+            //$("#screenshotclip" + (i + 1000)).addClass("nolikes");
+            if (localStorage.getItem("isLikeShown") != null && (!JSON.parse(localStorage.getItem("isLikeShown"))))
+                toggleLikes($("#screenshotclip" + (i + 1000))[0]);
+            else if (getUrlParam("noLikes") != null) toggleLikes($("#screenshotclip" + (i + 1000))[0]);
             $("#screenshotclip" + (i + 1000)).click(function () {
-                if ($(this).hasClass("nolikes")) {
-                    $(this).css("height", $(this).height() + 109);
-                    $(this).removeClass("nolikes")
-                } else {
-
-                    $(this).css("height", $(this).height() - 109);
-                    $(this).addClass("nolikes")
-                }
+                localStorage.setItem("isLikeShown", JSON.stringify(toggleLikes(this)));
             });
+        }
         else
             $("#screenshotclip" + (i + 1000)).click(function () {
                 goto($(this)[0].id);
@@ -334,9 +346,11 @@ $(function () {
         if ($("#translatetemp").css("display") == "none") $("#translatetemp").show(); else $("#translatetemp").hide();
     });
     $('#button-submit').click(function () {
+        saveUrlUser = true;
         submit_task();
     });
     $('#button-submit-fast').click(function () {
+        saveUrlUser = true;
         submit_task(true);
     });
     if (localStorage.getItem("translatetemp") == null) localStorage.setItem("translatetemp", '<div style="margin:10px 38px">\n' +
@@ -352,6 +366,7 @@ $(function () {
         $("body").removeClass("overview");
     });
 
+    if (localStorage.getItem("lastUser") != null) $("#url").val("https://twitter.com/" + localStorage.getItem("lastUser"));
     $("#url").keypress(function (event) {
         if (event.keyCode == 13) {
             submit_task(true);
